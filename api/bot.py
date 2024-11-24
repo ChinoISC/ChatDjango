@@ -6,7 +6,7 @@ from telegram.ext import (
     filters
 )
 
-TOKEN = 'TU_TOKEN_VA_AQUI'
+TOKEN = '7726637693:AAFGRFI1fhRqmBucmztsVvaidi1IYp1gSRs'
 
 # Comando inicial
 async def start(update: Update, context):
