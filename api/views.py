@@ -1,36 +1,30 @@
-from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+from telegram import Update
+from telegram.ext import ApplicationBuilder
 import json
 
+# Token del bot de Telegram
 TOKEN = '7726637693:AAFGRFI1fhRqmBucmztsVvaidi1IYp1gSRs'
 
-# Crear el bot
-bot = Bot(token=TOKEN)
+# Crea la instancia de la aplicación Telegram en el webhook
+async def process_update(update: Update):
+    # Aquí puedes manejar la lógica de tu bot, como responder a mensajes
+    if update.message:
+        text = update.message.text
+        await update.message.reply_text(f"Recibí tu mensaje: {text}")
 
-# Configurar el dispatcher y los handlers
-def setup_dispatcher(dispatcher):
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
-
+# Vista que manejará el webhook
 @csrf_exempt
 def webhook(request):
-    if request.method == "POST":
-        # Recibir la actualización de Telegram
-        try:
-            update = Update.de_json(json.loads(request.body.decode('utf-8')), bot)
-            dispatcher = Dispatcher(bot, None)
-            setup_dispatcher(dispatcher)
-            dispatcher.process_update(update)
-            return JsonResponse({"status": "ok"})
-        except Exception as e:
-            print(f"Error al procesar los datos del webhook: {e}")
-            return JsonResponse({"error": "Internal Server Error"}, status=500)
-    return JsonResponse({"error": "Método no permitido"}, status=405)
+    if request.method == 'POST':
+        # Los datos de la actualización de Telegram llegan en el cuerpo de la solicitud
+        update_data = json.loads(request.body.decode('utf-8'))
+        update = Update.de_json(update_data, ApplicationBuilder().token(TOKEN))
 
-def start(update, context):
-    update.message.reply_text("¡Hola! Soy tu bot de Telegram.")
+        # Procesa el mensaje recibido
+        ApplicationBuilder().token(TOKEN).dispatcher.process_update(update)
+        return HttpResponse(status=200)
 
-def echo(update, context):
-    update.message.reply_text(f"Recibí tu mensaje: {update.message.text}")
+    return JsonResponse({'error': 'Invalid request'}, status=400)
