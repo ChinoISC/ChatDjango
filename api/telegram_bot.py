@@ -1,34 +1,44 @@
+
 import logging
+import json
+from django.http import JsonResponse
 from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from django.conf import settings
-import json  # Asegúrate de importar json
-import asyncio
 
 # Habilitar los registros de logging para Telegram
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Definir el comando de inicio
-async def start(update: Update, context: CallbackContext) -> None:
+async def start(update: Update, context):
     await update.message.reply_text('¡Hola! Soy tu bot en Django.')
 
-async def process_update(request):
-    from django.http import JsonResponse
-    from telegram import Update
-    from telegram.ext import Application
+async def echo(update: Update, context):
+    # Repetir el mensaje de vuelta al usuario
+    await update.message.reply_text(update.message.text)
 
+def process_update(request):
     try:
-        # Asegúrate de decodificar correctamente el cuerpo del request
+        # Decodificar correctamente el cuerpo del request
         json_str = request.body.decode('UTF-8')  # Convertir de bytes a string
         update = Update.de_json(json.loads(json_str))  # Convertir string a objeto JSON
 
-        # Crea la aplicación en vez de 'Updater'
+        # Crear la aplicación en vez de ‘Updater’ y configurar handlers
         application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
 
-        # Procesar la actualización de manera asíncrona
-        await application.update_queue.put(update)  # Usa 'await' aquí
+        # Añadir manejadores
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+        # Procesar la actualización
+        application.update_queue.put(update)
+
+        # Esto es importante para correr el polling/asynchronous processing.
+        application.initialize()
+        application.start()
+        application.stop()
+
         print(json_str)
         return JsonResponse({'status': 'ok'})
     except Exception as e:
