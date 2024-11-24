@@ -1,31 +1,36 @@
+from telegram import Bot, Update
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from telegram import Update, Bot
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+import json
 
 TOKEN = '7726637693:AAFGRFI1fhRqmBucmztsVvaidi1IYp1gSRs'
+
+# Crear el bot
 bot = Bot(token=TOKEN)
 
-# Handlers para comandos y mensajes
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("¡Hola! Soy tu bot de Telegram.")
+# Configurar el dispatcher y los handlers
+def setup_dispatcher(dispatcher):
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_message = update.message.text
-    await update.message.reply_text(f"Recibí tu mensaje: {user_message}")
-
-# Define la vista para manejar actualizaciones
 @csrf_exempt
 def webhook(request):
     if request.method == "POST":
-        update = Update.de_json(request.body.decode('utf-8'), bot)
-        application = Application.builder().token(TOKEN).build()
-
-        # Registra los handlers
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-
-        # Procesa el update
-        application.process_update(update)
-        return JsonResponse({"status": "ok"})
+        # Recibir la actualización de Telegram
+        try:
+            update = Update.de_json(json.loads(request.body.decode('utf-8')), bot)
+            dispatcher = Dispatcher(bot, None)
+            setup_dispatcher(dispatcher)
+            dispatcher.process_update(update)
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            print(f"Error al procesar los datos del webhook: {e}")
+            return JsonResponse({"error": "Internal Server Error"}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+def start(update, context):
+    update.message.reply_text("¡Hola! Soy tu bot de Telegram.")
+
+def echo(update, context):
+    update.message.reply_text(f"Recibí tu mensaje: {update.message.text}")
