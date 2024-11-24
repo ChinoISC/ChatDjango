@@ -30,7 +30,7 @@ def process_update(request):
 
         # Procesar la actualización
         application.update_queue.put(update)
-
+        print(json_str)
         return JsonResponse({'status': 'ok'})
     except Exception as e:
         logger.error(f"Error al procesar la actualización: {e}")
