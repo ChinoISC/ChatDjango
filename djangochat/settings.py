@@ -122,3 +122,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# settings.py
+
+TELEGRAM_BOT_TOKEN = '7726637693:AAFGRFI1fhRqmBucmztsVvaidi1IYp1gSRs'
+TELEGRAM_WEBHOOK_URL = 'https://chatdjango-7azm.onrender.com/webhook'  # Reemplaza con la URL donde está tu webhook
+
