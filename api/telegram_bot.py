@@ -31,8 +31,15 @@ async def process_update(request):
         # Registrar el manejador de errores
         application.add_error_handler(error)
 
-        # Procesar el update directamente
+        # Inicializar y configurar la aplicación
+        await application.initialize()
+        await application.start()
+        
+        # Procesar el update después de que la aplicación ha sido inicializada
         await application.process_update(update)
+
+        # Detener la aplicación después de procesar (si es que la app se usa para un solo request, en vez de estar siempre en ejecución)
+        await application.stop()
 
         return {'status': 'ok'}
     except Exception as e:
