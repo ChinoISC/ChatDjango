@@ -1,21 +1,20 @@
-# telegram_bot.py
 import logging
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackContext
 from django.conf import settings
-import json  # 
+import json  # Asegúrate de importar json
+import asyncio
 
 # Habilitar los registros de logging para Telegram
-import logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Definir el comando de inicio
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('¡Hola! Soy tu bot en Django.')
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text('¡Hola! Soy tu bot en Django.')
 
-def process_update(request):
+async def process_update(request):
     from django.http import JsonResponse
     from telegram import Update
     from telegram.ext import Application
@@ -28,8 +27,8 @@ def process_update(request):
         # Crea la aplicación en vez de 'Updater'
         application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
 
-        # Procesar la actualización
-        application.update_queue.put(update)
+        # Procesar la actualización de manera asíncrona
+        await application.update_queue.put(update)  # Usa 'await' aquí
         print(json_str)
         return JsonResponse({'status': 'ok'})
     except Exception as e:
