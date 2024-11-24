@@ -18,7 +18,7 @@ async def echo(update: Update, context):
     # Repetir el mensaje de vuelta al usuario
     await update.message.reply_text(update.message.text)
 
-def process_update(request):
+async def process_update(request):
     try:
         # Decodificar correctamente el cuerpo del request
         json_str = request.body.decode('UTF-8')  # Convertir de bytes a string
@@ -32,12 +32,12 @@ def process_update(request):
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
         # Procesar la actualización
-        application.update_queue.put(update)
+        await application.update_queue.put(update)
 
-        # Esto es importante para correr el polling/asynchronous processing.
-        application.initialize()
-        application.start()
-        application.stop()
+        # Procesar el evento de inicio de aplicación asincrónicamente
+        await application.initialize()
+        await application.start()
+        await application.stop()
 
         print(json_str)
         return JsonResponse({'status': 'ok'})
